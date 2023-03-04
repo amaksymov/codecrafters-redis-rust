@@ -1,5 +1,5 @@
 // Uncomment this block to pass the first stage
-use std::io::Write;
+use std::io::{Write, BufReader, BufRead, Read};
 use std::net::{TcpListener, TcpStream};
 
 fn handle_client(mut stream: TcpStream) {
@@ -11,7 +11,21 @@ fn handle_client(mut stream: TcpStream) {
     // println!("{:?}", request);
 
     let response = "+PONG\r\n";
-    stream.write_all(response.as_bytes()).unwrap();
+    loop {
+        let mut read = [0; 1028];
+        match stream.read(&mut read) {
+            Ok(n) => {
+                if n == 0 { 
+                    // connection was closed
+                    break;
+                }
+                stream.write_all(response.as_bytes()).unwrap();
+            }
+            Err(e) => {
+                println!("error: {}", e);
+            }
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
